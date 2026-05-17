@@ -1,5 +1,11 @@
 """
-Build a single-page executive PDF summary of the project.
+Build an executive PDF summary of the Israeli Media Framing Tracker project.
+
+Design choices:
+- Justified body text (alignment=TA_JUSTIFY) on every paragraph.
+- Generous line spacing (~1.7x leading) for readability.
+- Two-page A4 layout: page 1 = context + findings, page 2 = methodology + skills.
+- Navy/gold color identity consistent with the dashboard and CV.
 
 Output: docs/Project_Summary.pdf
 """
@@ -7,6 +13,7 @@ Output: docs/Project_Summary.pdf
 from pathlib import Path
 
 from reportlab.lib import colors
+from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
@@ -14,6 +21,7 @@ from reportlab.platypus import (
     BaseDocTemplate,
     Frame,
     Image,
+    PageBreak,
     PageTemplate,
     Paragraph,
     Spacer,
@@ -25,60 +33,268 @@ ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = ROOT / "docs" / "Project_Summary.pdf"
 PIPELINE_IMG = ROOT / "docs" / "images" / "pipeline_overview.png"
 
+# Color identity
 NAVY = colors.HexColor("#1A3A5C")
 GOLD = colors.HexColor("#C9A14A")
-TEXT = colors.HexColor("#222222")
+TEXT = colors.HexColor("#1F1F1F")
 SUB = colors.HexColor("#555555")
-LINE = colors.HexColor("#D5D5D5")
+RULE = colors.HexColor("#D5D5D5")
 
 
 def make_styles():
     base = getSampleStyleSheet()
+    # Typography scale. Body is 10pt with 17pt leading (~1.7x line height, double-spaced look).
     return {
         "title": ParagraphStyle(
             "title", parent=base["Title"],
-            fontName="Helvetica-Bold", fontSize=18, textColor=NAVY,
-            leading=20, spaceAfter=2,
+            fontName="Helvetica-Bold", fontSize=20, textColor=NAVY,
+            leading=24, spaceAfter=4, alignment=TA_LEFT,
         ),
-        "tagline": ParagraphStyle(
-            "tagline", parent=base["Normal"],
-            fontName="Helvetica", fontSize=8.5, textColor=SUB,
-            leading=11, spaceAfter=4,
+        "subtitle": ParagraphStyle(
+            "subtitle", parent=base["Normal"],
+            fontName="Helvetica-Oblique", fontSize=9.5, textColor=SUB,
+            leading=14, spaceAfter=8, alignment=TA_JUSTIFY,
         ),
         "h2": ParagraphStyle(
             "h2", parent=base["Heading2"],
-            fontName="Helvetica-Bold", fontSize=10.5, textColor=NAVY,
-            leading=12, spaceBefore=6, spaceAfter=3,
+            fontName="Helvetica-Bold", fontSize=12, textColor=NAVY,
+            leading=15, spaceBefore=8, spaceAfter=4, alignment=TA_LEFT,
         ),
         "body": ParagraphStyle(
             "body", parent=base["Normal"],
-            fontName="Helvetica", fontSize=8.2, textColor=TEXT,
-            leading=10.6, spaceAfter=2,
-        ),
-        "body_tight": ParagraphStyle(
-            "body_tight", parent=base["Normal"],
-            fontName="Helvetica", fontSize=7.8, textColor=TEXT,
-            leading=9.8, spaceAfter=1,
+            fontName="Helvetica", fontSize=9.5, textColor=TEXT,
+            leading=15, spaceAfter=6, alignment=TA_JUSTIFY,
         ),
         "bullet": ParagraphStyle(
             "bullet", parent=base["Normal"],
-            fontName="Helvetica", fontSize=8.2, textColor=TEXT,
-            leading=10.6, leftIndent=10, bulletIndent=0,
-            spaceAfter=2,
+            fontName="Helvetica", fontSize=9.5, textColor=TEXT,
+            leading=15, leftIndent=14, bulletIndent=2,
+            spaceAfter=4, alignment=TA_JUSTIFY,
+        ),
+        "caption": ParagraphStyle(
+            "caption", parent=base["Normal"],
+            fontName="Helvetica-Oblique", fontSize=8.5, textColor=SUB,
+            leading=12, spaceAfter=8, alignment=TA_CENTER,
         ),
         "footer": ParagraphStyle(
             "footer", parent=base["Normal"],
-            fontName="Helvetica", fontSize=7.5, textColor=SUB,
-            leading=9, alignment=1,
+            fontName="Helvetica", fontSize=8, textColor=SUB,
+            leading=11, alignment=TA_CENTER,
         ),
     }
+
+
+def horizontal_rule(width_cm=17.6, color=RULE, thickness=0.5, space=6):
+    """A thin horizontal divider line as a Table-based rule."""
+    t = Table([[""]], colWidths=[width_cm * cm], rowHeights=[0.01])
+    t.setStyle(TableStyle([
+        ("LINEBELOW", (0, 0), (-1, -1), thickness, color),
+        ("TOPPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), space),
+    ]))
+    return t
+
+
+def header_band(S):
+    """Title block: project name + tagline."""
+    return [
+        Paragraph("Israeli Media Framing Tracker", S["title"]),
+        Paragraph(
+            "An end-to-end NLP analytics pipeline that quantifies how five Israeli news outlets "
+            "frame the same political entities and topics. The system pairs Hebrew and English sentiment "
+            "models with LLM-based emotion and entity enrichment, then surfaces the results through three "
+            "custom analytical metrics and a five-tab Streamlit dashboard. "
+            "<i>Portfolio analytics project. Live daily collection via Windows Task Scheduler. The current "
+            "snapshot covers 750 articles over 16 days; findings illustrate the methodology rather than "
+            "make definitive claims about Israeli media.</i>",
+            S["subtitle"],
+        ),
+    ]
+
+
+def pipeline_image(S):
+    """Pipeline diagram with centered caption."""
+    elements = []
+    if PIPELINE_IMG.exists():
+        img = Image(str(PIPELINE_IMG), width=17.5 * cm, height=5.1 * cm)
+        img.hAlign = "CENTER"
+        elements.append(img)
+        elements.append(Spacer(1, 4))
+        elements.append(Paragraph(
+            "Figure 1. End-to-end pipeline from RSS and HTML ingestion through multilingual NLP, "
+            "Claude API enrichment, and the final Streamlit dashboard.",
+            S["caption"],
+        ))
+    return elements
+
+
+def business_question_block(S):
+    """The single business question + four sub-questions."""
+    return [
+        Paragraph("The Business Question", S["h2"]),
+        Paragraph(
+            "Israeli media is polarized, but the diagnosis is usually anecdotal. This project replaces "
+            "anecdote with measurement and answers one operational question: "
+            "<b>When five Israeli outlets cover the same entity or topic, how far apart are their frames, "
+            "and which camp drives the gap?</b>",
+            S["body"],
+        ),
+        Paragraph(
+            "The question splits into four sub-questions an analyst at a PR firm, a corporate "
+            "communications team, or a political consultancy would need to answer: "
+            "<b>(1)</b> Where is the line? "
+            "<b>(2)</b> Who is the most polarizing public figure? "
+            "<b>(3)</b> Does each outlet carry a stable emotional fingerprint across topics? "
+            "<b>(4)</b> Does political lean explain the variance, or is a second axis at work?",
+            S["body"],
+        ),
+    ]
+
+
+def findings_block(S):
+    """The four headline findings as bullets."""
+    bullets = [
+        "<b>Cross-outlet framing gaps are large and structured.</b> Mean Polarization Index across "
+        "13 tracked entities is 0.41 (max 0.75 for Yair Lapid, min 0.05 for Lebanon). The gap correlates "
+        "with source identity in stable ways, not random noise.",
+
+        "<b>Yair Lapid is the most polarizing entity, not Netanyahu.</b> Walla covers Lapid at "
+        "-0.667 (hostile), Jerusalem Post at +0.085 (sympathetic). Netanyahu ranks only eighth at 0.27, "
+        "because every outlet covers him adversarially. The disagreement is over which figures deserve "
+        "the criticism, not whether to be critical.",
+
+        "<b>Each outlet has a stable emotional fingerprint that cuts across topics.</b> Ynet leads on "
+        "anger (42%); Walla on anger and fear (36% / 24%); Channel 14 on a distinctive Hopeful register "
+        "(14% pride, 9% joy); Globes on anticipation and fear (24% / 22%); Jerusalem Post on anger and "
+        "anticipation (32% / 24%). The signature persists when topic mix is controlled for.",
+
+        "<b>Political lean only partly explains framing.</b> The left-right axis predicts framing on "
+        "Judicial &amp; Legal (polarization 0.38) and Coalition &amp; Government (0.40), but not on "
+        "Security Operations or International Diplomacy. A second axis is at work: domestic versus "
+        "international focus.",
+    ]
+    elements = [Paragraph("Key Findings", S["h2"])]
+    for b in bullets:
+        elements.append(Paragraph("&bull;&nbsp; " + b, S["bullet"]))
+    return elements
+
+
+def bottom_line_block(S):
+    """Stakeholder takeaways."""
+    return [
+        Paragraph("Bottom Line for a Stakeholder", S["h2"]),
+        Paragraph(
+            "<b>For PR and corporate communications.</b> Globes is structurally different from the other "
+            "four outlets on both emotional register and topic mix, making it the right entry point for "
+            "any financial or commercial pitch. Ynet's adversarial baseline requires a different playbook.",
+            S["body"],
+        ),
+        Paragraph(
+            "<b>For political consulting.</b> The Polarization Index ranks public figures by how divided "
+            "their coverage is, a leading indicator of reputational exposure. A figure with a high score "
+            "is reading two different narratives about themselves depending on the outlet. The Entity "
+            "Tracker tab quantifies that gap and shows which outlets drive each side.",
+            S["body"],
+        ),
+    ]
+
+
+def methodology_block(S):
+    """The three custom metrics, defined."""
+    return [
+        Paragraph("Methodology", S["h2"]),
+        Paragraph(
+            "<b>Adversarial Coverage Score.</b> For each article, sentiment_intensity equals pos_score "
+            "minus neg_score, then averaged over a group (usually all coverage by one source of one "
+            "entity). Range -1 (fully adversarial) to +1 (fully sympathetic). Empirically left-skewed in "
+            "Israeli political coverage; the metric name reflects that observed distribution.",
+            S["body"],
+        ),
+        Paragraph(
+            "<b>Polarization Index.</b> For an entity or topic, compute the mean Adversarial Score per "
+            "source (or per political lean). The Polarization Index is the gap between the highest and "
+            "lowest mean, with a standard-deviation diagnostic reported alongside. Sources with fewer "
+            "than two articles on the entity are excluded to avoid inflating the index on thin coverage.",
+            S["body"],
+        ),
+        Paragraph(
+            "<b>Emotion Fingerprint.</b> Each article carries one of nine Claude-assigned emotion labels. "
+            "Labels collapse into four registers for the radar charts: Hostile (anger, disgust, "
+            "disappointment), Anxious (fear, sadness, anxiety, tension, concern), Hopeful (anticipation, "
+            "joy, pride, relief), Neutral (neutral, surprise).",
+            S["body"],
+        ),
+    ]
+
+
+def skills_block(S):
+    """Skills demonstrated, suitable for a hiring manager scan."""
+    bullets = [
+        "<b>Multilingual NLP pipeline.</b> DictaBERT for Hebrew (648 articles), Cardiff RoBERTa for "
+        "English (102 articles), with separate body and headline passes to capture clickbait amplification.",
+
+        "<b>LLM enrichment.</b> Anthropic Claude (Haiku 4.5) for nine-label emotion classification, "
+        "named entity recognition with Hebrew-to-English normalization (1,002 unique entities), and "
+        "12-category topic labeling.",
+
+        "<b>Three custom metrics designed from first principles.</b> Adversarial Coverage Score, "
+        "Polarization Index, Emotion Fingerprint. Defined, documented, and validated against thin-data "
+        "edge cases.",
+
+        "<b>Five-tab Streamlit dashboard</b> with ten interactive Plotly visualizations: KPI cards, "
+        "emotion heatmaps, topic specialization heatmaps, adversarial bar charts, four-axis radars, "
+        "polarization rankings, and most-adversarial-headlines tables.",
+
+        "<b>Production engineering.</b> JSON-LD date extraction fixed a 35% missing-timestamp bug on "
+        "Walla and Channel 14; a backfill script then recovered 100% of those dates. Daily ingestion "
+        "via Windows Task Scheduler, SQLite deduplication, structured logging.",
+
+        "<b>Analyst judgment.</b> Honest scoping, explicit limitations, in-app methodology tab. Findings "
+        "framed as illustrations of the methodology rather than overclaimed conclusions on a thin window.",
+    ]
+    elements = [Paragraph("Skills Demonstrated", S["h2"])]
+    for b in bullets:
+        elements.append(Paragraph("&bull;&nbsp; " + b, S["bullet"]))
+    return elements
+
+
+def tech_stack_block(S):
+    """Compact tech stack paragraph."""
+    return [
+        Paragraph("Tech Stack", S["h2"]),
+        Paragraph(
+            "Python 3.13. Hugging Face transformers with DictaBERT and Cardiff RoBERTa. Anthropic Claude "
+            "API. feedparser, requests, BeautifulSoup, lxml, and JSON-LD parsing for ingestion. SQLite "
+            "via SQLAlchemy, with CSV exports for portability. Streamlit and Plotly for the interactive "
+            "dashboard. pandas and numpy for the analytics layer. Windows Task Scheduler for daily runs.",
+            S["body"],
+        ),
+    ]
+
+
+def footer_block(S):
+    """Final contact footer with a gold rule above it."""
+    footer = Table(
+        [[Paragraph(
+            "Tal Jacob &middot; Data Analyst &middot; "
+            "<font color='#1A3A5C'><b>github.com/taljacob28/hebrew-news-sentiment</b></font> &middot; "
+            "taljacob28@gmail.com",
+            S["footer"]
+        )]],
+        colWidths=[17.6 * cm],
+    )
+    footer.setStyle(TableStyle([
+        ("LINEABOVE", (0, 0), (-1, 0), 1, GOLD),
+        ("TOPPADDING", (0, 0), (-1, -1), 8),
+    ]))
+    return [Spacer(1, 6), footer]
 
 
 def make_pdf():
     doc = BaseDocTemplate(
         str(OUTPUT), pagesize=A4,
-        leftMargin=1.2 * cm, rightMargin=1.2 * cm,
-        topMargin=1.0 * cm, bottomMargin=1.0 * cm,
+        leftMargin=1.7 * cm, rightMargin=1.7 * cm,
+        topMargin=1.5 * cm, bottomMargin=1.5 * cm,
     )
     frame = Frame(
         doc.leftMargin, doc.bottomMargin,
@@ -90,120 +306,20 @@ def make_pdf():
     S = make_styles()
     story = []
 
-    # ----- Header -----
-    story.append(Paragraph("Israeli Media Framing Tracker", S["title"]))
-    story.append(Paragraph(
-        "An end-to-end NLP pipeline that quantifies how five Israeli news outlets "
-        "frame political entities and topics. Hebrew &amp; English sentiment + LLM "
-        "enrichment + three custom analytical metrics + a 5-tab Streamlit dashboard. "
-        "<i>Portfolio analytics project. Live data collection via Windows Task Scheduler. "
-        "Findings illustrate the methodology; the data window is currently ~16 days.</i>",
-        S["tagline"],
-    ))
+    # ----- PAGE 1: context + business question + findings -----
+    story.extend(header_band(S))
+    story.extend(pipeline_image(S))
+    story.append(horizontal_rule())
+    story.extend(business_question_block(S))
+    story.extend(findings_block(S))
 
-    # ----- Pipeline image -----
-    if PIPELINE_IMG.exists():
-        img = Image(str(PIPELINE_IMG), width=18.6 * cm, height=5.4 * cm)
-        story.append(img)
-        story.append(Spacer(1, 3))
-
-    # ----- Two-column body using a Table for layout -----
-    left_col = []
-    left_col.append(Paragraph("The business question", S["h2"]))
-    left_col.append(Paragraph(
-        "When five Israeli outlets cover the same entity or topic, how far apart are "
-        "their frames, and which camp drives the gap? Four sub-questions: "
-        "<b>(1)</b> Where is the line? <b>(2)</b> Who is the most polarizing figure? "
-        "<b>(3)</b> Does each outlet have a distinct emotional fingerprint? "
-        "<b>(4)</b> Does political lean explain the variance?",
-        S["body"],
-    ))
-
-    left_col.append(Paragraph("Key findings (current snapshot)", S["h2"]))
-    for b in [
-        "<b>Polarization is structured, not noise.</b> Mean entity-level Polarization Index = 0.41 "
-        "across 13 tracked entities (max 0.75, min 0.05).",
-        "<b>Yair Lapid is the most polarizing figure.</b> Walla covers him at -0.667 (hostile), "
-        "JPost at +0.085 (sympathetic). Netanyahu is less polarizing (0.27) because every outlet "
-        "covers him adversarially.",
-        "<b>Each outlet has a stable emotional fingerprint.</b> Ynet 42% anger; Channel 14 14% pride "
-        "+ 9% joy; Globes 24% anticipation + 22% fear; Walla 36% anger + 24% fear.",
-        "<b>Political lean only partly explains framing.</b> Judicial &amp; Legal (0.38) and Coalition "
-        "&amp; Government (0.40) follow the L/R axis; Security Operations and International Diplomacy "
-        "do not. A second axis (domestic vs international focus) is at work.",
-    ]:
-        left_col.append(Paragraph("• " + b, S["bullet"]))
-
-    left_col.append(Paragraph("Bottom line for a stakeholder", S["h2"]))
-    left_col.append(Paragraph(
-        "For PR &amp; corporate comms, Globes' uniquely different topical and emotional profile makes "
-        "it the entry point for financial or commercial pitches. For political consulting, the "
-        "Polarization Index ranks public figures by their cross-spectrum exposure, a leading "
-        "indicator of reputational risk.",
-        S["body"],
-    ))
-
-    right_col = []
-    right_col.append(Paragraph("Skills demonstrated", S["h2"]))
-    for b in [
-        "<b>Multilingual NLP pipeline</b> (DictaBERT for Hebrew, Cardiff RoBERTa for English) on 750 articles.",
-        "<b>LLM enrichment</b> via Anthropic Claude API for emotion, entity, and topic labels.",
-        "<b>Three custom analytical metrics</b> designed from first principles "
-        "(Adversarial Score, Polarization Index, Emotion Fingerprint).",
-        "<b>5-tab Streamlit dashboard</b> with 10 interactive Plotly visualizations.",
-        "<b>SQL data warehouse</b> in SQLite with deduplication and indexed lookups.",
-        "<b>Production patterns</b>: daily ingestion via Task Scheduler, JSON-LD date extraction, "
-        "backfill scripts, quality flags, structured logging.",
-        "<b>Analyst judgment</b>: honest scoping, explicit limitations, methodology tab in-app for transparency.",
-    ]:
-        right_col.append(Paragraph("• " + b, S["bullet"]))
-
-    right_col.append(Paragraph("Methodology, at a glance", S["h2"]))
-    right_col.append(Paragraph(
-        "<b>Adversarial Score</b> = mean(pos_score − neg_score) per group, range -1 to +1. "
-        "<b>Polarization Index</b> = max − min of group means. "
-        "<b>Emotion Fingerprint</b> = normalized distribution across four registers: "
-        "Hostile, Anxious, Hopeful, Neutral.",
-        S["body_tight"],
-    ))
-
-    right_col.append(Paragraph("Tech stack", S["h2"]))
-    right_col.append(Paragraph(
-        "Python 3.13 · transformers / DictaBERT / Cardiff RoBERTa · Anthropic Claude · "
-        "feedparser · BeautifulSoup · SQLite via SQLAlchemy · pandas / numpy · "
-        "Streamlit · Plotly · Windows Task Scheduler.",
-        S["body_tight"],
-    ))
-
-    body_table = Table(
-        [[left_col, right_col]],
-        colWidths=[9.5 * cm, 9.1 * cm],
-    )
-    body_table.setStyle(TableStyle([
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        ("RIGHTPADDING", (0, 0), (0, 0), 8),
-        ("RIGHTPADDING", (1, 0), (1, 0), 0),
-        ("LEFTPADDING", (1, 0), (1, 0), 8),
-    ]))
-    story.append(body_table)
-    story.append(Spacer(1, 6))
-
-    # ----- Footer line + contact -----
-    footer_table = Table(
-        [[Paragraph(
-            "Tal Jacob · Data Analyst · "
-            "<font color='#1A3A5C'><b>github.com/taljacob28/hebrew-news-sentiment</b></font> · "
-            "taljacob28@gmail.com",
-            S["footer"]
-        )]],
-        colWidths=[18.6 * cm],
-    )
-    footer_table.setStyle(TableStyle([
-        ("LINEABOVE", (0, 0), (-1, 0), 0.5, GOLD),
-        ("TOPPADDING", (0, 0), (-1, -1), 5),
-    ]))
-    story.append(footer_table)
+    # ----- PAGE 2: bottom line + methodology + skills + tech -----
+    story.append(PageBreak())
+    story.extend(bottom_line_block(S))
+    story.extend(methodology_block(S))
+    story.extend(skills_block(S))
+    story.extend(tech_stack_block(S))
+    story.extend(footer_block(S))
 
     doc.build(story)
     print(f"Wrote: {OUTPUT}")
