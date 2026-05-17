@@ -130,10 +130,9 @@ news-sentiment-project/
 │   ├── backfill_dates.py         Recover missing timestamps for existing articles
 │   └── (other ETL utilities)
 ├── data/
-│   ├── articles.db               SQLite warehouse
 │   └── exports/
-│       ├── articles_final.csv    Clean article-level data ready for analysis
-│       └── entities_final.csv    Clean entity-level mentions
+│       ├── articles_final.csv    Clean article-level data (committed, ready for the dashboard)
+│       └── entities_final.csv    Clean entity-level mentions (committed)
 ├── docs/
 │   ├── Project_Summary.pdf       One-page executive summary
 │   └── images/                   Dashboard screenshots + pipeline diagram
@@ -151,6 +150,8 @@ news-sentiment-project/
 
 ## Setup
 
+This repo ships with the cleaned CSV exports (`data/exports/articles_final.csv` and `entities_final.csv`) so the dashboard runs immediately without re-running the pipeline.
+
 ```bash
 git clone https://github.com/taljacob28/hebrew-news-sentiment.git
 cd hebrew-news-sentiment
@@ -160,29 +161,31 @@ python -m venv .venv
 # source .venv/bin/activate       # macOS / Linux
 
 pip install -r requirements.txt
+
+streamlit run app/streamlit_app.py
 ```
 
-Create a `.env` file with your Anthropic API key:
+That is the full path to a running dashboard.
+
+### Extending the dataset
+
+To pull new articles, run the pipeline. You will need an Anthropic API key in a `.env` file:
 
 ```
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-Run the full ingestion + enrichment pipeline:
+Then:
 
 ```bash
-python pipeline.py --run                    # latest RSS
-python pipeline.py --archive --days 14      # archive backfill
-python analyze_existing.py --auto           # Claude enrichment
+python pipeline.py --run                    # latest RSS, today's articles
+python pipeline.py --archive --days 14      # archive backfill, 14 days back
+python analyze_existing.py --auto           # Claude enrichment on new rows
 python data_clean.py                        # cleaning
 python prepare_final_data.py                # final CSVs
 ```
 
-Open the dashboard:
-
-```bash
-streamlit run app/streamlit_app.py
-```
+The first invocation downloads the DictaBERT and Cardiff RoBERTa models (~1 GB combined, one-time).
 
 ## Limitations
 
