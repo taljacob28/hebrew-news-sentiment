@@ -9,8 +9,16 @@ import logging
 import time
 from sqlalchemy import select, update
 
-from database import get_db, ArticleRecord
-from claude_analyzer import get_analyzer
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+
+from src.database import get_db, ArticleRecord
+from src.claude_analyzer import get_analyzer
 
 logger = logging.getLogger(__name__)
 

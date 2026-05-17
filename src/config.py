@@ -7,8 +7,8 @@ Topic keywords drive the politics/security filter for sources without dedicated 
 
 from pathlib import Path
 
-# Project paths
-PROJECT_ROOT = Path(__file__).parent
+# Project paths (config.py lives in src/, so the project root is one level up)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 DATA_DIR.mkdir(exist_ok=True)
 DB_PATH = DATA_DIR / "articles.db"

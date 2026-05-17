@@ -126,27 +126,30 @@ A one-page executive PDF lives at [docs/Project_Summary.pdf](docs/Project_Summar
 
 ```
 hebrew-news-sentiment/
-├── app/streamlit_app.py        # 5-tab interactive dashboard
-├── src/                        # Reusable analytics layer
-│   ├── data_load.py            # Quality-filtered loaders
-│   ├── metrics.py              # Adversarial Score, Polarization Index, Fingerprint
-│   └── viz.py                  # Plotly chart builders
-├── scripts/
-│   ├── diagnose_dates.py       # Locate publish dates in raw HTML
-│   ├── backfill_dates.py       # Recover missing timestamps
-│   └── build_summary_pdf.py    # One-page executive PDF builder
-├── data/exports/               # Clean article + entity CSVs (committed)
-├── docs/                       # PDF summary, dashboard screenshots, pipeline diagram
-├── pipeline.py                 # End-to-end orchestration
-├── scrapers.py                 # RSS scrapers
-├── archive_scrapers.py         # HTML archive scrapers with JSON-LD parsing
-├── claude_analyzer.py          # Claude API enrichment wrapper
-├── nlp.py                      # DictaBERT + RoBERTa wrappers
-├── data_clean.py               # Cleaning and feature engineering
-├── prepare_final_data.py       # Final CSV exports
-├── database.py                 # SQLAlchemy schema
-├── config.py                   # Source registry, keywords, paths
-└── requirements.txt
+├── app/streamlit_app.py         # 5-tab interactive dashboard
+├── src/                         # All importable modules
+│   ├── config.py                # Source registry, keywords, paths
+│   ├── scrapers.py              # RSS scrapers
+│   ├── archive_scrapers.py      # HTML archive scrapers with JSON-LD parsing
+│   ├── nlp.py                   # DictaBERT + RoBERTa wrappers
+│   ├── claude_analyzer.py       # Claude API enrichment wrapper
+│   ├── database.py              # SQLAlchemy schema and session helpers
+│   ├── data_load.py             # Quality-filtered dataframe loaders
+│   ├── metrics.py               # Adversarial Score, Polarization Index, Fingerprint
+│   └── viz.py                   # Plotly chart builders
+├── scripts/                     # Runnable end-to-end scripts
+│   ├── pipeline.py              # Orchestrator: scrape, classify, store
+│   ├── analyze_existing.py      # Claude enrichment on unanalyzed rows
+│   ├── data_clean.py            # Cleaning and feature engineering
+│   ├── prepare_final_data.py    # Final CSV exports
+│   ├── diagnose_dates.py        # Locate publish dates in raw HTML
+│   ├── backfill_dates.py        # Recover missing timestamps
+│   └── build_summary_pdf.py     # One-page executive PDF builder
+├── data/exports/                # Clean article + entity CSVs (committed)
+├── docs/                        # PDF summary, dashboard screenshots, pipeline diagram
+├── run_pipeline.bat             # Windows Task Scheduler entry point
+├── requirements.txt
+└── LICENSE
 ```
 
 ---
@@ -172,11 +175,11 @@ streamlit run app/streamlit_app.py
 Place an Anthropic API key in `.env`, then:
 
 ```bash
-python pipeline.py --run                  # latest RSS articles
-python pipeline.py --archive --days 14    # archive backfill
-python analyze_existing.py --auto         # Claude enrichment on new rows
-python data_clean.py                      # cleaning and features
-python prepare_final_data.py              # final CSVs
+python scripts/pipeline.py --run                  # latest RSS articles
+python scripts/pipeline.py --archive --days 14    # archive backfill
+python scripts/analyze_existing.py --auto         # Claude enrichment on new rows
+python scripts/data_clean.py                      # cleaning and features
+python scripts/prepare_final_data.py              # final CSVs
 ```
 
 The first run downloads the DictaBERT and Cardiff RoBERTa models (~1 GB combined, one-time).

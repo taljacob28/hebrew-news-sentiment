@@ -14,7 +14,7 @@ import requests
 from bs4 import BeautifulSoup
 from dateutil import parser as date_parser
 
-from config import (
+from .config import (
     POLITICS_KEYWORDS_HE,
     SECURITY_KEYWORDS_HE,
     POLITICS_KEYWORDS_EN,
@@ -22,7 +22,7 @@ from config import (
     REQUEST_TIMEOUT,
     USER_AGENT,
 )
-from scrapers import Article
+from .scrapers import Article
 
 logger = logging.getLogger(__name__)
 

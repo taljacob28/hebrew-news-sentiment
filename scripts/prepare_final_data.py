@@ -24,7 +24,15 @@ from pathlib import Path
 
 import pandas as pd
 
-from config import DATA_DIR
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+
+from src.config import DATA_DIR
 
 logger = logging.getLogger(__name__)
 

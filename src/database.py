@@ -31,7 +31,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-from config import DB_PATH
+from .config import DB_PATH
 
 logger = logging.getLogger(__name__)
 

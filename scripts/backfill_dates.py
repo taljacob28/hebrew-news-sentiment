@@ -26,8 +26,8 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from config import USER_AGENT, REQUEST_TIMEOUT
-from database import ArticleRecord, get_db
+from src.config import USER_AGENT, REQUEST_TIMEOUT
+from src.database import ArticleRecord, get_db
 
 logger = logging.getLogger(__name__)
 

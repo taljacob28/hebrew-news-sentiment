@@ -16,10 +16,18 @@ from pathlib import Path
 
 from tqdm import tqdm
 
-from scrapers import fetch_all
-from nlp import get_classifier
-from database import get_db
-from config import DATA_DIR
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+
+from src.scrapers import fetch_all
+from src.nlp import get_classifier
+from src.database import get_db
+from src.config import DATA_DIR
 
 logger = logging.getLogger(__name__)
 

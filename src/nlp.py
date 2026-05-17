@@ -18,7 +18,7 @@ import logging
 from dataclasses import dataclass
 from typing import Optional, List, Dict
 
-from config import HEBREW_SENTIMENT_MODEL, ENGLISH_SENTIMENT_MODEL
+from .config import HEBREW_SENTIMENT_MODEL, ENGLISH_SENTIMENT_MODEL
 
 logger = logging.getLogger(__name__)
 

@@ -16,7 +16,7 @@ import feedparser
 import requests
 from dateutil import parser as date_parser
 
-from config import (
+from .config import (
     SOURCES,
     POLITICS_KEYWORDS_HE,
     SECURITY_KEYWORDS_HE,
