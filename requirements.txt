@@ -1,0 +1,31 @@
+# Web scraping
+feedparser>=6.0.10
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# NLP - Hebrew (DictaBERT) and English (Cardiff RoBERTa)
+transformers>=4.40.0
+torch>=2.0.0
+sentencepiece>=0.2.0
+
+# LLM enrichment
+anthropic>=0.34.0
+
+# Data
+pandas>=2.0.0
+numpy>=1.24.0
+sqlalchemy>=2.0.0
+
+# Dashboard
+streamlit>=1.30.0
+plotly>=5.18.0
+
+# PDF generation (one-page executive summary)
+reportlab>=4.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+python-dateutil>=2.8.2
+tqdm>=4.66.0
+PyYAML>=6.0

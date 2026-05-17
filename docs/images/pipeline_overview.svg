@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 320" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <linearGradient id="navy" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1A3A5C"/>
+      <stop offset="1" stop-color="#0F2440"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#C9A14A"/>
+      <stop offset="1" stop-color="#8C6F30"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#C9A14A"/>
+    </marker>
+    <style>
+      .stage-title { font-size: 14px; font-weight: 700; fill: #ffffff; }
+      .stage-sub { font-size: 11px; fill: #C9A14A; }
+      .source { font-size: 12px; fill: #ffffff; }
+      .title { font-size: 18px; font-weight: 700; fill: #1A3A5C; }
+      .arrow-line { stroke: #C9A14A; stroke-width: 2; fill: none; }
+    </style>
+  </defs>
+
+  <text x="550" y="30" text-anchor="middle" class="title">Israeli Media Framing Tracker — End-to-End Pipeline</text>
+
+  <!-- Stage 1: Sources -->
+  <g transform="translate(20,60)">
+    <rect width="180" height="220" rx="10" fill="url(#navy)"/>
+    <text x="90" y="28" text-anchor="middle" class="stage-title">1. Sources</text>
+    <text x="90" y="44" text-anchor="middle" class="stage-sub">5 Israeli outlets</text>
+    <g class="source">
+      <circle cx="20" cy="72" r="4" fill="#1f77b4"/><text x="34" y="76">Walla (Hebrew)</text>
+      <circle cx="20" cy="98" r="4" fill="#17becf"/><text x="34" y="102">Ynet (Hebrew)</text>
+      <circle cx="20" cy="124" r="4" fill="#bcbd22"/><text x="34" y="128">Globes (Hebrew)</text>
+      <circle cx="20" cy="150" r="4" fill="#8c564b"/><text x="34" y="154">Jerusalem Post (EN)</text>
+      <circle cx="20" cy="176" r="4" fill="#d62728"/><text x="34" y="180">Channel 14 (Hebrew)</text>
+    </g>
+    <text x="90" y="206" text-anchor="middle" class="stage-sub">RSS feeds + HTML</text>
+  </g>
+
+  <!-- Stage 2: Scraping -->
+  <g transform="translate(225,60)">
+    <rect width="170" height="220" rx="10" fill="url(#navy)"/>
+    <text x="85" y="28" text-anchor="middle" class="stage-title">2. Scraping</text>
+    <text x="85" y="44" text-anchor="middle" class="stage-sub">Daily ingestion</text>
+    <g class="source">
+      <text x="14" y="76">• feedparser RSS</text>
+      <text x="14" y="98">• BeautifulSoup HTML</text>
+      <text x="14" y="120">• JSON-LD date parse</text>
+      <text x="14" y="142">• URL + hash dedup</text>
+      <text x="14" y="164">• Topic keyword filter</text>
+      <text x="14" y="186">• Windows Task Sched.</text>
+    </g>
+  </g>
+
+  <!-- Stage 3: NLP -->
+  <g transform="translate(420,60)">
+    <rect width="170" height="220" rx="10" fill="url(#navy)"/>
+    <text x="85" y="28" text-anchor="middle" class="stage-title">3. NLP Layer</text>
+    <text x="85" y="44" text-anchor="middle" class="stage-sub">Multilingual sentiment</text>
+    <g class="source">
+      <text x="14" y="76">• DictaBERT</text>
+      <text x="14" y="98">  (Hebrew sentiment)</text>
+      <text x="14" y="124">• Cardiff RoBERTa</text>
+      <text x="14" y="146">  (English sentiment)</text>
+      <text x="14" y="172">• Body + headline</text>
+      <text x="14" y="190">  divergence scoring</text>
+    </g>
+  </g>
+
+  <!-- Stage 4: LLM Enrichment -->
+  <g transform="translate(615,60)">
+    <rect width="170" height="220" rx="10" fill="url(#navy)"/>
+    <text x="85" y="28" text-anchor="middle" class="stage-title">4. LLM Enrichment</text>
+    <text x="85" y="44" text-anchor="middle" class="stage-sub">Claude Haiku 4.5</text>
+    <g class="source">
+      <text x="14" y="76">• Emotion classification</text>
+      <text x="14" y="98">  (9 labels)</text>
+      <text x="14" y="124">• Named entity extract.</text>
+      <text x="14" y="146">  + English normalize</text>
+      <text x="14" y="172">• Topic categorization</text>
+      <text x="14" y="190">  (10 macro topics)</text>
+    </g>
+  </g>
+
+  <!-- Stage 5: Storage + Metrics -->
+  <g transform="translate(810,60)">
+    <rect width="170" height="220" rx="10" fill="url(#navy)"/>
+    <text x="85" y="28" text-anchor="middle" class="stage-title">5. Metrics</text>
+    <text x="85" y="44" text-anchor="middle" class="stage-sub">SQLite + custom math</text>
+    <g class="source">
+      <text x="14" y="76">• Adversarial Score</text>
+      <text x="14" y="100">• Polarization Index</text>
+      <text x="14" y="124">• Emotion Fingerprint</text>
+      <text x="14" y="156">Storage:</text>
+      <text x="14" y="178">• SQLite database</text>
+      <text x="14" y="196">• CSV exports</text>
+    </g>
+  </g>
+
+  <!-- Final Stage: Streamlit Output -->
+  <g transform="translate(1005,60)">
+    <rect width="85" height="220" rx="10" fill="url(#gold)"/>
+    <text x="42" y="100" text-anchor="middle" class="stage-title">6.</text>
+    <text x="42" y="120" text-anchor="middle" class="stage-title">Streamlit</text>
+    <text x="42" y="140" text-anchor="middle" class="stage-title">Dashboard</text>
+    <text x="42" y="166" text-anchor="middle" style="font-size:11px;fill:#1A3A5C;font-weight:700;">5 tabs</text>
+    <text x="42" y="184" text-anchor="middle" style="font-size:11px;fill:#1A3A5C;font-weight:700;">10 charts</text>
+  </g>
+
+  <!-- Connecting arrows -->
+  <line x1="200" y1="170" x2="225" y2="170" class="arrow-line" marker-end="url(#arrow)"/>
+  <line x1="395" y1="170" x2="420" y2="170" class="arrow-line" marker-end="url(#arrow)"/>
+  <line x1="590" y1="170" x2="615" y2="170" class="arrow-line" marker-end="url(#arrow)"/>
+  <line x1="785" y1="170" x2="810" y2="170" class="arrow-line" marker-end="url(#arrow)"/>
+  <line x1="980" y1="170" x2="1005" y2="170" class="arrow-line" marker-end="url(#arrow)"/>
+
+  <!-- Bottom caption -->
+  <text x="550" y="305" text-anchor="middle" style="font-size:11px;fill:#666;">
+    Python 3.13 · DictaBERT · Cardiff RoBERTa · Anthropic Claude · SQLite · Streamlit · Plotly
+  </text>
+</svg>
